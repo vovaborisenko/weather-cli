@@ -1,6 +1,23 @@
 #!/usr/bin/env node
 import { getArgs } from './helpers/args.js';
-import { printHelp } from './services/log.service.js';
+import { printError, printHelp, printSuccess } from './services/log.service.js';
+import { setItem } from './services/storage.service.js';
+
+async function saveToken(token) {
+    if (!token?.length) {
+        printError('Токен не передан');
+
+        return;
+    }
+
+    try {
+        await setItem('token', token);
+
+        printSuccess('Токен успешно сохранен');
+    } catch (error) {
+        printError(error.message);
+    }
+}
 
 function initCLI() {
     const args = getArgs(process.argv);
@@ -16,7 +33,7 @@ function initCLI() {
     }
 
     if (args.t) {
-        // установка api-key
+        saveToken(args.t);
     }
 
     // вывод погоды
