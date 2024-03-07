@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { getArgs } from './helpers/args.js';
+import { printHelp } from './services/log.service.js';
 
 function initCLI() {
     const args = getArgs(process.argv);
@@ -7,7 +8,7 @@ function initCLI() {
     console.log(args);
 
     if (args.h) {
-        // вывод помощи
+        printHelp();
     }
 
     if (args.s) {
