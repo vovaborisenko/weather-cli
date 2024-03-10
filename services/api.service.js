@@ -1,11 +1,13 @@
 import axios from 'axios';
 import { STORAGE_KEY, getItem } from './storage.service.js';
+import { t } from './i18n.service.js';
 
 export async function getWeather(city) {
     const token = await getItem(STORAGE_KEY.token);
+    const lang = await getItem(STORAGE_KEY.language);
 
     if (!token) {
-        throw new Error('Нет токена, установите токен с помощью команды -t <api_key>');
+        throw new Error(t('error_no_token'));
     }
 
     const { data } = await axios.get('https://api.openweathermap.org/data/2.5/weather', {
@@ -13,7 +15,7 @@ export async function getWeather(city) {
             q: city,
             appid: token,
             units: 'metric',
-            lang: 'ru'
+            lang
         }
     });
 

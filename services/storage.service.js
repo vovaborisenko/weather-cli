@@ -7,6 +7,7 @@ const fileName = join(homedir(), 'weather-data.json');
 export const STORAGE_KEY = {
     token: 'token',
     city: 'city',
+    language: 'language'
 };
 
 export async function getItem(key) {

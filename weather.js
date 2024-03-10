@@ -1,44 +1,27 @@
 #!/usr/bin/env node
 import { getArgs } from './helpers/args.js';
 import { getWeather } from './services/api.service.js';
+import { setLocale, t } from './services/i18n.service.js';
 import { printError, printHelp, printSuccess, printWeather } from './services/log.service.js';
 import { STORAGE_KEY, setItem, getItem } from './services/storage.service.js';
 
-async function saveToken(token) {
-    if (!token?.length) {
-        printError('Токен не передан');
+async function saveSetting(key, value) {
+    if (!value?.length) {
+        printError(`${key} ${t('not_handed')}`);
 
         return;
     }
 
     try {
-        await setItem(STORAGE_KEY.token, token);
+        await setItem(key, value);
 
-        printSuccess('Токен успешно сохранен');
+        printSuccess(`${key} ${t('saved')}`);
     } catch (error) {
         printError(error.message);
     }
 }
 
-async function saveCity(city) {
-    if (!city?.length) {
-        printError('Город не передан');
-
-        return;
-    }
-
-    try {
-        await setItem(STORAGE_KEY.city, city);
-
-        printSuccess('Город успешно сохранен');
-    } catch (error) {
-        printError(error.message);
-    }
-}
-
-async function getForecast() {
-    const city = await getItem(STORAGE_KEY.city);
-
+async function getForecastByCity(city) {
     try {
         const weather = await getWeather(city);
 
@@ -51,17 +34,34 @@ async function getForecast() {
         }
 
         const message = {
-            400: 'Город не передан',
-            401: 'Неверно указан токен',
-            404: `Неверно указан город. Указанный город: ${city}`,
-        }[error.response?.status] || 'Ошибка!';
+            400: t('city_not_handed'),
+            401: t('token_invalid'),
+            404: `${t('token_invalid')} ${city}`,
+        }[error.response?.status] || t('error');
 
         printError(message);
     }
 }
 
-function initCLI() {
-    const { h: isHelp, c: city, t: token } = getArgs(process.argv);
+async function getForecast() {
+    const cities = (await getItem(STORAGE_KEY.city)).split(',');
+
+    cities.forEach((city) => getForecastByCity(city));
+}
+
+const ARGS_MAP = {
+    c: STORAGE_KEY.city,
+    t: STORAGE_KEY.token,
+    l: STORAGE_KEY.language
+};
+
+async function initCLI() {
+    const {
+        h: isHelp,
+        ...params
+    } = getArgs(process.argv);
+
+    setLocale(await getItem(STORAGE_KEY.language));
 
     if (isHelp) {
         printHelp();
@@ -69,19 +69,21 @@ function initCLI() {
         return;
     }
 
-    if (!city && !token) {
+    if (!Object.keys(params).some(arg => ARGS_MAP[arg])) {
         getForecast();
 
         return;
     }
 
-    if (city) {
-        saveCity(city);
-    }
+    Object.entries(params).forEach(([arg, value]) => {
+        const key = ARGS_MAP[arg];
 
-    if (token) {
-        saveToken(token);
-    }
+        if (!key) {
+            return;
+        }
+
+        saveSetting(key, value);
+    });
 }
 
 initCLI();
