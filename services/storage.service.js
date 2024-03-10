@@ -4,6 +4,11 @@ import { stat, readFile, writeFile } from 'fs/promises';
 
 const fileName = join(homedir(), 'weather-data.json');
 
+export const STORAGE_KEY = {
+    token: 'token',
+    city: 'city',
+};
+
 export async function getItem(key) {
     const data = await getData();
 
